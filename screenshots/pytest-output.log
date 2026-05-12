@@ -1,0 +1,15 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.13.13, pytest-8.3.4, pluggy-1.6.0 -- /Users/wall-e/Developer/mba-ia-pull-evaluation-prompt/venv/bin/python3.13
+cachedir: .pytest_cache
+rootdir: /Users/wall-e/Developer/mba-ia-pull-evaluation-prompt
+plugins: anyio-4.13.0
+collecting ... collected 6 items
+
+tests/test_prompts.py::TestPrompts::test_prompt_has_system_prompt PASSED [ 16%]
+tests/test_prompts.py::TestPrompts::test_prompt_has_role_definition PASSED [ 33%]
+tests/test_prompts.py::TestPrompts::test_prompt_mentions_format PASSED   [ 50%]
+tests/test_prompts.py::TestPrompts::test_prompt_has_few_shot_examples PASSED [ 66%]
+tests/test_prompts.py::TestPrompts::test_prompt_no_todos PASSED          [ 83%]
+tests/test_prompts.py::TestPrompts::test_minimum_techniques PASSED       [100%]
+
+============================== 6 passed in 0.03s ===============================
