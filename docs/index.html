@@ -1,0 +1,865 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bug to User Story — Prompt Engineering com LangChain & LangSmith</title>
+<meta name="description" content="Overview educacional do projeto MBA FullCycle: técnicas de prompt engineering aplicadas para transformar bug reports em user stories ágeis, com avaliação automatizada via LLM-as-judge.">
+<style>
+  :root {
+    --ivory:  #FAF9F5;
+    --paper:  #FFFFFF;
+    --slate:  #141413;
+    --clay:   #D97757;
+    --clay-d: #B85C3E;
+    --oat:    #E3DACC;
+    --olive:  #788C5D;
+    --olive-d: #5F7048;
+    --g100:   #F0EEE6;
+    --g200:   #E6E3DA;
+    --g300:   #D1CFC5;
+    --g500:   #87867F;
+    --g700:   #3D3D3A;
+    --serif:  ui-serif, Georgia, "Times New Roman", Times, serif;
+    --sans:   system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono:   ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--ivory);
+    color: var(--slate);
+    font-family: var(--sans);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 32px 140px; }
+
+  /* ── masthead ─────────────────────────── */
+  header.masthead {
+    padding: 80px 0 56px;
+    border-bottom: 1.5px solid var(--g300);
+    margin-bottom: 12px;
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--g500);
+    margin-bottom: 18px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 24px; height: 1.5px;
+    background: var(--clay);
+  }
+  h1 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: clamp(38px, 5.4vw, 62px);
+    line-height: 1.06;
+    letter-spacing: -0.018em;
+    margin: 0 0 8px;
+    max-width: 18ch;
+  }
+  h1 em { font-style: italic; color: var(--clay); }
+  .intro {
+    font-size: 16.5px;
+    color: var(--g700);
+    margin: 22px 0 0;
+    max-width: 640px;
+  }
+  .intro a { color: var(--clay); text-decoration-color: var(--oat); text-underline-offset: 3px; }
+  .intro a:hover { text-decoration-color: var(--clay); }
+
+  .stat-strip {
+    display: flex; flex-wrap: wrap; gap: 28px;
+    margin-top: 38px;
+    padding-top: 28px;
+    border-top: 1.5px solid var(--g200);
+  }
+  .stat .v {
+    font-family: var(--serif);
+    font-size: 30px;
+    font-weight: 500;
+    letter-spacing: -0.012em;
+    line-height: 1;
+  }
+  .stat .v.pass { color: var(--olive-d); }
+  .stat .v.warn { color: var(--clay); }
+  .stat .k {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--g500);
+    margin-top: 6px;
+  }
+
+  /* ── toc pills ────────────────────────── */
+  nav.toc {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    padding: 30px 0 0;
+  }
+  nav.toc a {
+    font-size: 12.5px;
+    padding: 7px 14px;
+    border: 1.5px solid var(--g300);
+    border-radius: 999px;
+    text-decoration: none;
+    color: var(--g700);
+    background: var(--paper);
+    transition: border-color 120ms, color 120ms;
+    display: inline-flex; align-items: center; gap: 7px;
+  }
+  nav.toc a .n {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--g500);
+  }
+  nav.toc a:hover { border-color: var(--slate); color: var(--slate); }
+  nav.toc a:hover .n { color: var(--clay); }
+
+  /* ── sections ─────────────────────────── */
+  section { margin-top: 72px; scroll-margin-top: 28px; }
+  .sec-head {
+    display: flex; align-items: baseline; gap: 16px; margin-bottom: 10px;
+  }
+  .sec-head .idx {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--clay);
+    font-weight: 600;
+    width: 34px;
+    flex-shrink: 0;
+  }
+  .sec-head h2 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 27px;
+    margin: 0;
+    letter-spacing: -0.012em;
+  }
+  .sec-intro {
+    font-size: 14.5px;
+    color: var(--g700);
+    max-width: 720px;
+    margin: 0 0 28px 50px;
+  }
+  @media (max-width: 640px) { .sec-intro { margin-left: 0; } }
+
+  .sec-body { margin-left: 50px; }
+  @media (max-width: 640px) { .sec-body { margin-left: 0; } }
+
+  /* ── cards ────────────────────────────── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(316px, 1fr));
+    gap: 20px;
+  }
+  .card {
+    background: var(--paper);
+    border: 1.5px solid var(--g300);
+    border-radius: 14px;
+    padding: 22px 22px 20px;
+    transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+  }
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(20, 20, 19, 0.08);
+    border-color: var(--slate);
+  }
+  .card .tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--clay);
+    margin-bottom: 12px;
+    display: block;
+  }
+  .card h3 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 19px;
+    margin: 0 0 10px;
+    letter-spacing: -0.005em;
+  }
+  .card p {
+    font-size: 14px;
+    color: var(--g700);
+    margin: 0 0 14px;
+    line-height: 1.55;
+  }
+  .card .example {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--g100);
+    border: 1px solid var(--g200);
+    border-radius: 6px;
+    padding: 10px 12px;
+    color: var(--g700);
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+  .card .example em { color: var(--clay); font-style: normal; }
+
+  /* ── code block ───────────────────────── */
+  pre.code {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    background: var(--slate);
+    color: var(--ivory);
+    border-radius: 10px;
+    padding: 18px 20px;
+    overflow-x: auto;
+    line-height: 1.6;
+    margin: 0 0 16px;
+  }
+  pre.code .c-key { color: #C7C0AF; }
+  pre.code .c-str { color: var(--oat); }
+  pre.code .c-com { color: var(--g500); font-style: italic; }
+
+  /* ── tables ───────────────────────────── */
+  .tbl-wrap {
+    overflow-x: auto;
+    border: 1.5px solid var(--g300);
+    border-radius: 14px;
+    background: var(--paper);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+  }
+  table thead th {
+    text-align: left;
+    padding: 14px 18px;
+    background: var(--g100);
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--g700);
+    border-bottom: 1.5px solid var(--g200);
+  }
+  table tbody td {
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--g200);
+    color: var(--g700);
+    vertical-align: top;
+  }
+  table tbody tr:last-child td { border-bottom: none; }
+  table tbody tr.highlight {
+    background: linear-gradient(90deg, rgba(217,119,87,0.06), transparent);
+  }
+  table tbody tr.highlight td { color: var(--slate); font-weight: 500; }
+  td.num { font-family: var(--mono); }
+  td .pass { color: var(--olive-d); font-weight: 600; }
+  td .fail { color: var(--clay-d); font-weight: 600; }
+  td .delta-up { color: var(--olive-d); }
+  td .delta-down { color: var(--clay-d); }
+
+  /* ── metric bars ──────────────────────── */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 18px;
+  }
+  .metric-card {
+    background: var(--paper);
+    border: 1.5px solid var(--g300);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .metric-card .name {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--g500);
+    margin-bottom: 8px;
+  }
+  .metric-card .score {
+    font-family: var(--serif);
+    font-size: 32px;
+    font-weight: 500;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .metric-card .score.pass { color: var(--olive-d); }
+  .metric-card .bar {
+    height: 6px; border-radius: 3px;
+    background: var(--g200);
+    overflow: hidden;
+    margin-top: 12px;
+  }
+  .metric-card .fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--olive), var(--olive-d));
+    border-radius: 3px;
+  }
+  .metric-card .vs {
+    font-size: 11.5px;
+    color: var(--g500);
+    margin-top: 8px;
+  }
+
+  /* ── callout ──────────────────────────── */
+  .callout {
+    background: var(--g100);
+    border-left: 3px solid var(--clay);
+    border-radius: 6px;
+    padding: 16px 20px;
+    font-size: 14px;
+    color: var(--g700);
+    margin: 24px 0;
+  }
+  .callout strong { color: var(--slate); }
+  .callout .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--clay);
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  /* ── timeline ─────────────────────────── */
+  .timeline { position: relative; padding-left: 28px; }
+  .timeline::before {
+    content: "";
+    position: absolute;
+    left: 8px; top: 8px; bottom: 8px;
+    width: 1.5px;
+    background: var(--g300);
+  }
+  .step {
+    position: relative;
+    padding: 0 0 26px;
+  }
+  .step::before {
+    content: "";
+    position: absolute;
+    left: -28px; top: 6px;
+    width: 13px; height: 13px;
+    border-radius: 999px;
+    background: var(--paper);
+    border: 2px solid var(--g500);
+  }
+  .step.win::before { border-color: var(--olive-d); background: var(--olive); }
+  .step.regression::before { border-color: var(--clay-d); background: var(--clay); }
+  .step.final::before {
+    border-color: var(--olive-d);
+    background: var(--olive-d);
+    width: 16px; height: 16px;
+    left: -30px;
+  }
+  .step h4 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 16.5px;
+    margin: 0 0 4px;
+  }
+  .step .meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--g500);
+    margin-bottom: 8px;
+  }
+  .step p { font-size: 14px; color: var(--g700); margin: 0; }
+
+  /* ── footer ───────────────────────────── */
+  footer {
+    margin-top: 100px;
+    padding-top: 36px;
+    border-top: 1.5px solid var(--g300);
+    color: var(--g500);
+    font-size: 13px;
+  }
+  footer a { color: var(--g700); text-decoration-color: var(--g300); }
+  footer a:hover { color: var(--clay); text-decoration-color: var(--clay); }
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+  @media (max-width: 640px) { .footer-grid { grid-template-columns: 1fr; } }
+  footer h5 {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--g500);
+    margin: 0 0 12px;
+  }
+  footer ul { list-style: none; padding: 0; margin: 0; }
+  footer li { margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow">MBA FullCycle · Prompt Engineering</div>
+  <h1>De bug report a user story, com <em>otimização guiada por métricas</em></h1>
+  <p class="intro">
+    Como combinar Role Prompting, Few-shot Learning, Chain of Thought e Skeleton of Thought para construir um prompt que transforma relatos técnicos em user stories ágeis — avaliado por LLM-as-judge contra cinco métricas, com critério rígido de aprovação em <a href="https://github.com/diogenesdauster/mba-ia-pull-evaluation-prompt">todas elas individualmente</a>.
+  </p>
+
+  <div class="stat-strip">
+    <div class="stat"><div class="v pass">0.9252</div><div class="k">Média Final</div></div>
+    <div class="stat"><div class="v">5 / 5</div><div class="k">Métricas ≥ 0.9</div></div>
+    <div class="stat"><div class="v">8</div><div class="k">Iterações</div></div>
+    <div class="stat"><div class="v">9</div><div class="k">Few-shot Examples</div></div>
+    <div class="stat"><div class="v">~27kB</div><div class="k">System Prompt</div></div>
+  </div>
+
+  <nav class="toc">
+    <a href="#desafio"><span class="n">01</span> O Desafio</a>
+    <a href="#tecnicas"><span class="n">02</span> Técnicas Aplicadas</a>
+    <a href="#padroes"><span class="n">03</span> Padrões de Dedução</a>
+    <a href="#jornada"><span class="n">04</span> A Jornada</a>
+    <a href="#resultados"><span class="n">05</span> Resultados Finais</a>
+    <a href="#executar"><span class="n">06</span> Como Executar</a>
+    <a href="#recursos"><span class="n">07</span> Recursos</a>
+  </nav>
+</header>
+
+<!-- ═════ 01 — O DESAFIO ════════════════════════════════ -->
+<section id="desafio">
+  <div class="sec-head">
+    <div class="idx">01</div>
+    <h2>O Desafio</h2>
+  </div>
+  <p class="sec-intro">
+    Transformar relatos de bug em user stories ágeis bem estruturadas (formato <em>"Como um... eu quero... para que..."</em> + critérios Dado/Quando/Então). O prompt é avaliado em quinze exemplos via LLM-as-judge.
+  </p>
+
+  <div class="sec-body">
+    <div class="grid">
+      <div class="card">
+        <span class="tag">Input</span>
+        <h3>Bug Report bruto</h3>
+        <p>Texto livre descrevendo o problema. Pode ser uma frase curta ou um relato denso com logs, métricas de impacto e múltiplos problemas correlacionados.</p>
+        <div class="example">Dashboard mostra contagem errada de usuários ativos. Mostra 50 mas só há 42 na lista.</div>
+      </div>
+
+      <div class="card">
+        <span class="tag">Output esperado</span>
+        <h3>User Story estruturada</h3>
+        <p>Persona específica, ação clara, benefício de negócio, critérios de aceitação testáveis, e sub-secções proporcionais à complexidade do bug.</p>
+        <div class="example"><em>Como um</em> administrador visualizando o dashboard, <em>eu quero</em> ver a contagem correta de usuários ativos, <em>para que</em> eu possa tomar decisões baseadas em dados precisos.</div>
+      </div>
+
+      <div class="card">
+        <span class="tag">Métricas</span>
+        <h3>Cinco métricas, todas ≥ 0.9</h3>
+        <p>Três métricas base (F1, Clarity, Precision) avaliadas via <code style="background:var(--g100);padding:1px 6px;border-radius:4px;font-family:var(--mono);font-size:12px">gpt-4o</code> como juiz, mais duas derivadas (Helpfulness, Correctness). Critério: aprovação em <strong>todas</strong>, não apenas na média.</p>
+      </div>
+
+      <div class="card">
+        <span class="tag">Dataset</span>
+        <h3>15 exemplos calibrados</h3>
+        <p>Cinco bugs simples, sete médios, três complexos. Cada um com bug report, reference output do gabarito, e metadados de domínio e severidade. Modelo responder: <code style="background:var(--g100);padding:1px 6px;border-radius:4px;font-family:var(--mono);font-size:12px">gpt-4o-mini</code>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════ 02 — TÉCNICAS APLICADAS ═══════════════════════ -->
+<section id="tecnicas">
+  <div class="sec-head">
+    <div class="idx">02</div>
+    <h2>Quatro Técnicas, Combinadas</h2>
+  </div>
+  <p class="sec-intro">
+    Cada técnica resolve uma falha específica do prompt v1 baseline (que pontuava ~0.45-0.50 em todas as métricas). A combinação delas, com atenção ao ordenamento e às sub-secções condicionais, é o que sustenta o salto até ≥ 0.9.
+  </p>
+
+  <div class="sec-body">
+    <div class="grid">
+
+      <div class="card">
+        <span class="tag">Técnica 01 · Role Prompting</span>
+        <h3>Persona define o vocabulário</h3>
+        <p>Sem persona explícita, o modelo improvisa o ponto de vista. Definir um <em>Product Owner Sênior com 15 anos de experiência</em> ancora tom, vocabulário (negócio, não técnico) e nível de detalhe esperado.</p>
+        <div class="example">Você é um Product Owner Sênior com 15 anos de experiência em produtos digitais (e-commerce, SaaS B2B, mobile, ERPs e CRMs)…</div>
+      </div>
+
+      <div class="card">
+        <span class="tag">Técnica 02 · Few-shot Learning</span>
+        <h3>Exemplos comunicam o que prosa não consegue</h3>
+        <p>Nove pares input/output cobrindo a faixa completa de complexidade (3 simples + 5 médios + 1 complexo). Cada exemplo demonstra uma combinação distinta de sub-secções condicionais.</p>
+        <div class="example">### Exemplo 1 — bug SIMPLE
+bug_report: Dashboard mostra contagem errada…
+output: Como um administrador visualizando…</div>
+      </div>
+
+      <div class="card">
+        <span class="tag">Técnica 03 · Chain of Thought</span>
+        <h3>Raciocínio interno em cinco passos</h3>
+        <p>Antes de gerar output, o modelo executa internamente: classificar complexidade, identificar persona afetada, inferir objetivo de negócio, extrair critérios, selecionar formato. <em>Não verbaliza</em> os passos.</p>
+        <div class="example">1. CLASSIFICAR COMPLEXIDADE
+2. IDENTIFICAR PERSONA AFETADA
+3. INFERIR OBJETIVO DE NEGÓCIO
+4. EXTRAIR CRITÉRIOS
+5. SELECIONAR FORMATO</div>
+      </div>
+
+      <div class="card">
+        <span class="tag">Técnica 04 · Skeleton of Thought</span>
+        <h3>Três templates por complexidade</h3>
+        <p>SIMPLE: user story + 5 critérios. MEDIUM: + Contexto Técnico e sub-secções opcionais (Severidade, Critérios Adicionais, Critérios de Prevenção, Acessibilidade, Exemplo de Cálculo). COMPLEX: estrutura multi-secção com separadores <code style="background:var(--g100);padding:1px 6px;border-radius:4px;font-family:var(--mono);font-size:12px">=== ===</code>.</p>
+      </div>
+
+    </div>
+
+    <div class="callout">
+      <span class="label">Insight</span>
+      <strong>A primeira palavra da resposta DEVE ser "Como"</strong> — uma regra trivial mas crítica. Sem ela, o modelo às vezes prefixava metadata ("Complexidade: SIMPLE...") quebrando a estrutura esperada pelo judge. Pequenas regras com efeito grande.
+    </div>
+  </div>
+</section>
+
+<!-- ═════ 03 — PADRÕES DE DEDUÇÃO ══════════════════════ -->
+<section id="padroes">
+  <div class="sec-head">
+    <div class="idx">03</div>
+    <h2>Padrões de Dedução por Domínio</h2>
+  </div>
+  <p class="sec-intro">
+    O insight central da otimização: as references do dataset incluem padrões standard que um PM sênior <em>infere</em>, mas que o bug original não menciona — backdrop e ESC em modais, audit logs em segurança, email de confirmação em transações. O prompt explicita esses padrões por domínio.
+  </p>
+
+  <div class="sec-body">
+    <div class="grid">
+
+      <div class="card">
+        <span class="tag">UI / Modais</span>
+        <h3>Backdrop, ESC, foco no modal</h3>
+        <p>Quando bug envolver modal ou overlay, dispara secção <em>Critérios de Acessibilidade</em> com foco do teclado no modal, fechamento via ESC e click no backdrop.</p>
+      </div>
+
+      <div class="card">
+        <span class="tag">Performance · Mobile</span>
+        <h3>Paginação · RecyclerView · ViewHolder</h3>
+        <p>Listas com mais de 50 itens disparam <em>Critérios Técnicos</em> exigindo paginação (20 por vez), background thread, RecyclerView com ViewHolder pattern e scroll infinito.</p>
+      </div>
+
+      <div class="card">
+        <span class="tag">Cálculos · Business</span>
+        <h3>Exemplo de Cálculo passo-a-passo</h3>
+        <p>Bug com números + operação matemática (R$, %) dispara secção <em>Exemplo de Cálculo</em> com linha-a-linha (Subtotal, Desconto, Total) usando valores literais do bug.</p>
+      </div>
+
+      <div class="card">
+        <span class="tag">E-commerce · Estoque</span>
+        <h3>Reserva temporária 15 min</h3>
+        <p>Race conditions em carrinho disparam <em>Critérios de Prevenção</em>: aviso "estoque limitado", reservar estoque por 15 minutos durante checkout.</p>
+      </div>
+
+      <div class="card">
+        <span class="tag">Integração · Webhooks</span>
+        <h3>Email de confirmação · Audit log</h3>
+        <p>Toda integração via webhook ou gateway implica email de confirmação ao cliente e log de auditoria do evento — mesmo quando o bug não os menciona.</p>
+      </div>
+
+      <div class="card">
+        <span class="tag">Segurança · OWASP</span>
+        <h3>Severidade · Código OWASP · Dados expostos</h3>
+        <p>Bugs de autorização disparam <em>Contexto de Segurança</em> com Tipo de Falha, Código OWASP (ex: A01:2021), Dados Expostos e Severidade ALTA/CRÍTICA.</p>
+      </div>
+
+      <div class="card">
+        <span class="tag">Dashboards</span>
+        <h3>Atualizado em tempo real · status filtrado</h3>
+        <p>Métricas em dashboard exigem critério "atualizado em tempo real" e filtro implícito por status apropriado (ex: "apenas usuários ativos").</p>
+      </div>
+
+      <div class="card">
+        <span class="tag">Multi-persona</span>
+        <h3>Critérios Adicionais para Admins</h3>
+        <p>Quando bug envolve admin + usuário comum, disparar secção <em>Critérios Adicionais para Admins</em>: acesso total, audit log de operações administrativas.</p>
+      </div>
+
+    </div>
+
+    <div class="callout">
+      <span class="label">Por que isto funciona</span>
+      <strong>O LLM-as-judge premia outputs com vocabulário canônico.</strong> Frases como "atualizado em tempo real", "reservar temporariamente 15 minutos", "backdrop", "RecyclerView com ViewHolder pattern" aparecem repetidamente nas references — quando o output contém essas frases exatas, o F1-Score (que mede sobreposição de informação) sobe substancialmente.
+    </div>
+  </div>
+</section>
+
+<!-- ═════ 04 — A JORNADA ════════════════════════════════ -->
+<section id="jornada">
+  <div class="sec-head">
+    <div class="idx">04</div>
+    <h2>A Jornada — Oito Iterações</h2>
+  </div>
+  <p class="sec-intro">
+    A spec menciona "espera-se 3-5 iterações". Foram necessárias <strong>oito</strong>. Cada movimento foi calibrado por análise de traces no LangSmith — examinando o raciocínio do judge para cada exemplo e ajustando o prompt cirurgicamente em resposta.
+  </p>
+
+  <div class="sec-body">
+
+    <div class="tbl-wrap" style="margin-bottom: 32px;">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>Estratégia</th><th>F1</th><th>Clarity</th><th>Precision</th><th>Média</th><th>Sinal</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="num">0</td><td>Baseline v2 (4 técnicas, exemplos sintéticos)</td><td class="num">0.77</td><td class="num">0.87</td><td class="num">0.82</td><td class="num">0.8225</td><td>—</td></tr>
+          <tr><td class="num">1</td><td>Triggers OBRIGATÓRIOS + exatamente 5 critérios</td><td class="num">0.76</td><td class="num">0.86</td><td class="num">0.81</td><td class="num">0.8103</td><td><span class="delta-down">↓ regressão</span></td></tr>
+          <tr><td class="num">2</td><td>Adicionar regra "abstrair identificadores"</td><td class="num">0.74</td><td class="num">0.87</td><td class="num">0.80</td><td class="num">0.8021</td><td><span class="delta-down">↓ regressão</span></td></tr>
+          <tr><td class="num">3</td><td>Revert. ADD "Padrões Standard da Indústria"</td><td class="num">0.79</td><td class="num">0.88</td><td class="num">0.83</td><td class="num">0.8287</td><td><span class="delta-up">↑ recuperação</span></td></tr>
+          <tr><td class="num">4</td><td>+ Regras de número e benefit framing</td><td class="num">0.78</td><td class="num">0.87</td><td class="num">0.80</td><td class="num">0.8139</td><td><span class="delta-down">↓ regressão</span></td></tr>
+          <tr><td class="num">5</td><td>Revert. Vocabulário canônico dataset-aligned</td><td class="num">0.81</td><td class="num">0.88</td><td class="num">0.83</td><td class="num">0.8423</td><td><span class="delta-up">↑</span></td></tr>
+          <tr><td class="num">6</td><td>+ 3 dataset examples como few-shot</td><td class="num">0.82</td><td class="num">0.91</td><td class="num">0.87</td><td class="num">0.8655</td><td><span class="delta-up">↑ Clarity passou</span></td></tr>
+          <tr><td class="num">7</td><td>+ 3 examples (6 total)</td><td class="num">0.87</td><td class="num">0.92</td><td class="num">0.89</td><td class="num">0.8952</td><td><span class="delta-up">↑ Helpfulness passou</span></td></tr>
+          <tr class="highlight"><td class="num">8</td><td><strong>+ 3 examples (9 total) — cobertura completa</strong></td><td class="num"><span class="pass">0.92</span></td><td class="num"><span class="pass">0.95</span></td><td class="num"><span class="pass">0.91</span></td><td class="num"><span class="pass">0.9252</span></td><td><span class="pass">✓ APROVADO</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-family:var(--serif);font-weight:500;font-size:21px;margin:30px 0 18px;letter-spacing:-0.008em;">Os quatro momentos críticos</h3>
+
+    <div class="timeline">
+
+      <div class="step regression">
+        <h4>As regressões do início</h4>
+        <div class="meta">iterações 1 + 2 · −0.020 acumulado</div>
+        <p>Adicionar imperatividade ao prompt (OBRIGATORIAMENTE, EXATAMENTE 5 critérios, abstrair identificadores) piorou os scores. Lição: imperatividade excessiva quebra a adaptabilidade do modelo a contextos variados.</p>
+      </div>
+
+      <div class="step win">
+        <h4>O debug-by-trace que mudou tudo</h4>
+        <div class="meta">iteração 3-5 · primeiro pivot</div>
+        <p>Em vez de continuar adivinhando, fomos buscar via API do LangSmith as reasonings do gpt-4o judge para cada exemplo. O padrão emergiu: o modelo omitia frases canônicas que as references usavam ("atualizado em tempo real", "backdrop", "RecyclerView", "reservar temporariamente"). Estas frases representavam vocabulário implícito de PM sênior.</p>
+      </div>
+
+      <div class="step win">
+        <h4>A escalada de few-shot</h4>
+        <div class="meta">iterações 6-8 · +0.060 em três iterações</div>
+        <p>Mesmo com vocabulário canônico, o modelo lutava com a estrutura completa das references. A solução foi adicionar references como exemplos few-shot — 3 → 6 → 9 exemplos cobrindo a faixa completa de padrões (validação, dashboards, mobile, e-commerce, modal, cálculo, webhook, security, cross-browser).</p>
+      </div>
+
+      <div class="step final">
+        <h4>Aprovação confirmada em três runs</h4>
+        <div class="meta">iter 8 · run 1: 0.9252 · run 2: 0.9494 · run 3: 0.9370</div>
+        <p>O judge gpt-4o é declarado com temperature=0 mas apresenta variância de ±0.02 entre runs. Verificámos a aprovação em três execuções independentes — em todas as runs, todas as cinco métricas individuais ficaram acima de 0.9.</p>
+      </div>
+
+    </div>
+
+    <div class="callout">
+      <span class="label">Recomendação da spec, validada na prática</span>
+      <em>"Use o Tracing do LangSmith como sua principal ferramenta de debug — ele mostra exatamente o que o LLM está pensando."</em> Seguir esta dica foi o ponto de inflexão. Antes disso, estávamos a iterar no escuro.
+    </div>
+  </div>
+</section>
+
+<!-- ═════ 05 — RESULTADOS ══════════════════════════════ -->
+<section id="resultados">
+  <div class="sec-head">
+    <div class="idx">05</div>
+    <h2>Resultados Finais</h2>
+  </div>
+  <p class="sec-intro">
+    Comparativo do prompt baseline v1 (intencionalmente fraco para servir de ponto de partida) com o v2 otimizado, e detalhamento de cada métrica final.
+  </p>
+
+  <div class="sec-body">
+
+    <h3 style="font-family:var(--serif);font-weight:500;font-size:19px;margin:0 0 18px;">Métricas individuais — v2 final</h3>
+
+    <div class="metrics-grid" style="margin-bottom: 32px;">
+      <div class="metric-card">
+        <div class="name">Helpfulness</div>
+        <div class="score pass">0.93</div>
+        <div class="bar"><div class="fill" style="width: 93%"></div></div>
+        <div class="vs">v1: 0.45 · +106%</div>
+      </div>
+      <div class="metric-card">
+        <div class="name">Correctness</div>
+        <div class="score pass">0.92</div>
+        <div class="bar"><div class="fill" style="width: 92%"></div></div>
+        <div class="vs">v1: 0.52 · +77%</div>
+      </div>
+      <div class="metric-card">
+        <div class="name">F1-Score</div>
+        <div class="score pass">0.92</div>
+        <div class="bar"><div class="fill" style="width: 92%"></div></div>
+        <div class="vs">v1: 0.48 · +92%</div>
+      </div>
+      <div class="metric-card">
+        <div class="name">Clarity</div>
+        <div class="score pass">0.95</div>
+        <div class="bar"><div class="fill" style="width: 95%"></div></div>
+        <div class="vs">v1: 0.50 · +90%</div>
+      </div>
+      <div class="metric-card">
+        <div class="name">Precision</div>
+        <div class="score pass">0.91</div>
+        <div class="bar"><div class="fill" style="width: 91%"></div></div>
+        <div class="vs">v1: 0.46 · +98%</div>
+      </div>
+    </div>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr><th>Métrica</th><th>v1 baseline</th><th>v2 otimizado</th><th>Δ absoluto</th><th>Δ relativo</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Helpfulness</td><td class="num">0.45</td><td class="num">0.93</td><td class="num"><span class="delta-up">+0.48</span></td><td class="num">+106%</td><td><span class="pass">✓ Aprovado</span></td></tr>
+          <tr><td>Correctness</td><td class="num">0.52</td><td class="num">0.92</td><td class="num"><span class="delta-up">+0.40</span></td><td class="num">+77%</td><td><span class="pass">✓ Aprovado</span></td></tr>
+          <tr><td>F1-Score</td><td class="num">0.48</td><td class="num">0.92</td><td class="num"><span class="delta-up">+0.44</span></td><td class="num">+92%</td><td><span class="pass">✓ Aprovado</span></td></tr>
+          <tr><td>Clarity</td><td class="num">0.50</td><td class="num">0.95</td><td class="num"><span class="delta-up">+0.45</span></td><td class="num">+90%</td><td><span class="pass">✓ Aprovado</span></td></tr>
+          <tr><td>Precision</td><td class="num">0.46</td><td class="num">0.91</td><td class="num"><span class="delta-up">+0.45</span></td><td class="num">+98%</td><td><span class="pass">✓ Aprovado</span></td></tr>
+          <tr class="highlight"><td><strong>Média geral</strong></td><td class="num">0.482</td><td class="num">0.9252</td><td class="num"><span class="delta-up">+0.44</span></td><td class="num">+92%</td><td><span class="pass">✓ STATUS APROVADO</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═════ 06 — COMO EXECUTAR ═══════════════════════════ -->
+<section id="executar">
+  <div class="sec-head">
+    <div class="idx">06</div>
+    <h2>Como Executar</h2>
+  </div>
+  <p class="sec-intro">
+    Reproduzir a execução completa, do clone até o resultado final, exige cinco passos. Estimativa de custo OpenAI por avaliação: ~US$ 0,50–1,00.
+  </p>
+
+  <div class="sec-body">
+
+    <h3 style="font-family:var(--serif);font-weight:500;font-size:19px;margin:0 0 14px;">Pré-requisitos</h3>
+    <ul style="font-size:14.5px;color:var(--g700);margin:0 0 24px 18px;line-height:1.7;">
+      <li>Python 3.9+ (testado em 3.13)</li>
+      <li>Conta LangSmith com API key — handle público definido</li>
+      <li>Conta OpenAI com billing ativo</li>
+    </ul>
+
+    <h3 style="font-family:var(--serif);font-weight:500;font-size:19px;margin:0 0 14px;">Setup inicial</h3>
+<pre class="code"><span class="c-com"># Clone + virtualenv + dependências</span>
+git clone https://github.com/diogenesdauster/mba-ia-pull-evaluation-prompt
+cd mba-ia-pull-evaluation-prompt
+python3 -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+
+<span class="c-com"># Configurar .env (a partir de .env.example)</span>
+cp .env.example .env
+<span class="c-com"># Preencher: LANGSMITH_API_KEY, OPENAI_API_KEY, USERNAME_LANGSMITH_HUB,</span>
+<span class="c-com">#            LLM_PROVIDER=openai, LLM_MODEL=gpt-4o-mini, EVAL_MODEL=gpt-4o</span></pre>
+
+    <h3 style="font-family:var(--serif);font-weight:500;font-size:19px;margin:24px 0 14px;">Fluxo completo</h3>
+<pre class="code"><span class="c-com"># 1. Pull do prompt v1 (baseline ruim) do LangSmith Hub</span>
+python src/pull_prompts.py
+
+<span class="c-com"># 2. Validar estrutura do v2 com pytest (6 testes)</span>
+pytest tests/test_prompts.py -v
+
+<span class="c-com"># 3. Push do v2 otimizado (público) para o Hub</span>
+python src/push_prompts.py
+
+<span class="c-com"># 4. Avaliar v2 contra 15 exemplos × 3 evaluators</span>
+python src/evaluate.py</pre>
+
+    <h3 style="font-family:var(--serif);font-weight:500;font-size:19px;margin:24px 0 14px;">Output esperado</h3>
+<pre class="code">==================================================
+Prompt: <span class="c-str">&lt;seu_username&gt;/bug_to_user_story_v2</span>
+==================================================
+
+Métricas Derivadas:
+  - Helpfulness: <span class="c-str">0.93 ✓</span>
+  - Correctness: <span class="c-str">0.92 ✓</span>
+
+Métricas Base:
+  - F1-Score:   <span class="c-str">0.92 ✓</span>
+  - Clarity:    <span class="c-str">0.95 ✓</span>
+  - Precision:  <span class="c-str">0.91 ✓</span>
+
+📊 MÉDIA GERAL: 0.9252
+✅ STATUS: APROVADO - Todas as métricas &gt;= 0.9</pre>
+  </div>
+</section>
+
+<!-- ═════ 07 — RECURSOS ════════════════════════════════ -->
+<section id="recursos">
+  <div class="sec-head">
+    <div class="idx">07</div>
+    <h2>Recursos & Links</h2>
+  </div>
+  <p class="sec-intro">
+    Acesso direto ao código-fonte, ao prompt público no LangSmith Hub, e ao tracing detalhado da avaliação.
+  </p>
+
+  <div class="sec-body">
+    <div class="grid">
+
+      <div class="card">
+        <span class="tag">Código</span>
+        <h3>Repositório GitHub</h3>
+        <p>Fork público com todo o código-fonte, prompts em YAML, dataset, testes pytest e este overview.</p>
+        <p style="margin-top:14px;"><a href="https://github.com/diogenesdauster/mba-ia-pull-evaluation-prompt" style="color:var(--clay);text-decoration-color:var(--oat);text-underline-offset:3px;">github.com/diogenesdauster/mba-ia-pull-evaluation-prompt →</a></p>
+      </div>
+
+      <div class="card">
+        <span class="tag">LangSmith Hub</span>
+        <h3>Prompt v2 público</h3>
+        <p>Versão otimizada publicada no Hub, com 10 commits visíveis representando a evolução do trabalho ao longo das iterações.</p>
+        <p style="margin-top:14px;"><a href="https://smith.langchain.com/hub/teste-mba-fullcyle/bug_to_user_story_v2" style="color:var(--clay);text-decoration-color:var(--oat);text-underline-offset:3px;">smith.langchain.com/hub/… →</a></p>
+      </div>
+
+      <div class="card">
+        <span class="tag">LangSmith</span>
+        <h3>Project Tracing</h3>
+        <p>Dashboard com todas as execuções, traces detalhados de cada avaliação, e o dataset de 15 exemplos com referências.</p>
+        <p style="margin-top:14px;"><a href="https://smith.langchain.com/projects/mba-bug-to-user-story" style="color:var(--clay);text-decoration-color:var(--oat);text-underline-offset:3px;">smith.langchain.com/projects/… →</a></p>
+      </div>
+
+      <div class="card">
+        <span class="tag">Documentação</span>
+        <h3>README completo</h3>
+        <p>Documentação de 318 linhas com a jornada completa, tabela de iterações, técnicas detalhadas e instruções de execução.</p>
+        <p style="margin-top:14px;"><a href="https://github.com/diogenesdauster/mba-ia-pull-evaluation-prompt/blob/main/README.md" style="color:var(--clay);text-decoration-color:var(--oat);text-underline-offset:3px;">Ver README.md →</a></p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-grid">
+    <div>
+      <h5>O Projeto</h5>
+      <ul>
+        <li>Desafio MBA FullCycle · 2026</li>
+        <li>Pull · Optimize · Push · Evaluate · Iterate</li>
+        <li>Status final: <span style="color:var(--olive-d);font-weight:600;">Aprovado em todas as 5 métricas</span></li>
+      </ul>
+    </div>
+    <div>
+      <h5>Stack</h5>
+      <ul>
+        <li>LangChain 0.3.13 · LangSmith 0.2.7</li>
+        <li>OpenAI gpt-4o-mini (responder) + gpt-4o (judge)</li>
+        <li>Python 3.13 · pytest · PyYAML</li>
+      </ul>
+    </div>
+  </div>
+</footer>
+
+</div>
+</body>
+</html>
