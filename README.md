@@ -4,6 +4,18 @@ Desafio do MBA FullCycle: transformar bug reports em user stories ágeis atravé
 
 ---
 
+## 🌐 Overview Interativo — GitHub Pages
+
+Uma página visual e navegável com o resumo completo do projeto, técnicas aplicadas, jornada das 8 iterações e resultados detalhados:
+
+**👉 [diogenesdauster.github.io/mba-ia-pull-evaluation-prompt](https://diogenesdauster.github.io/mba-ia-pull-evaluation-prompt/)**
+
+[![Overview do projeto no GitHub Pages](screenshots/github-pages-overview.png)](https://diogenesdauster.github.io/mba-ia-pull-evaluation-prompt/)
+
+> *Clique na imagem para abrir a versão interativa com TOC, cards expandíveis, timeline visual e tabelas detalhadas.*
+
+---
+
 ## Resultado Final
 
 **Status: ✅ APROVADO**
